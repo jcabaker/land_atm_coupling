@@ -55,10 +55,6 @@ from mpl_toolkits.basemap import maskoceans
 from datetime import datetime
 from scipy.stats import linregress as ols
 
-iris.FUTURE.netcdf_promote = True
-iris.FUTURE.netcdf_no_unlimited = True
-iris.FUTURE.cell_datetime_objects = True
-
 
 def main(t_cube, et_cube, ols_out='r', wet_dry=False, constraint_yrs=None,
          pre_data_path=('/nfs/a68/gyjcab/datasets/lapse_data_harmonised/'
