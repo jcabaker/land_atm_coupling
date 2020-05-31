@@ -10,25 +10,17 @@ The scripts in this repository accompany the following manuscript:
 Land-atmosphere moisture coupling over South America in simulations from the UK and Brazil climate models
 
 Authors and affiliations:
-- Jessica C.A. Baker 1
-- Dayana Castilho de Souza 2
-- Martin B. Andrews 3 
-- Paulo Kubota 2
-- Wolfgang Buermann 4
-- Caio A.S. Coelho 2
-- Manuel Gloor 5
-- Luis Garcia-Carreras 6
-- John H. Marsham 1,7
+- Jessica C.A. Baker, School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
+- Dayana Castilho de Souza, Centre for Weather Forecast and Climate Studies (CPTEC), National Institute for Space Research (INPE), Brazil
+- Martin B. Andrews, Met Office Hadley Centre, Exeter, EX1 3PB, UK
+- Paulo Kubota, Centre for Weather Forecast and Climate Studies (CPTEC), National Institute for Space Research (INPE), Brazil
+- Wolfgang Buermann, Institute of Geography, Augsburg University, Augsburg, Germany
+- Caio A.S. Coelho, Centre for Weather Forecast and Climate Studies (CPTEC), National Institute for Space Research (INPE), Brazil
+- Manuel Gloor, School of Geography, University of Leeds, Leeds, LS2 9JT, UK
+- Luis Garcia-Carreras, School of Environment, University of Manchester, UK
+- John H. Marsham, School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
 - Silvio N. Figueroa 2
-- Dominick V. Spracklen 1
-
-1. School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
-2. Centre for Weather Forecast and Climate Studies (CPTEC), National Institute for Space Research (INPE), Brazil
-3. Met Office Hadley Centre, Exeter, EX1 3PB, UK
-4. Institute of Geography, Augsburg University, Augsburg, Germany
-5. School of Geography, University of Leeds, Leeds, LS2 9JT, UK
-6. School of Environment, University of Manchester, UK
-7. National Centre for Atmospheric Science, 71-75 Clarendon Rd, Leeds, LS2 9PH, UK
+- Dominick V. Spracklen, School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
 
 Contents:
 - terrestrial_coupling_index.py
