@@ -16,4 +16,4 @@ Diagnostic scripts:
 Script providing examples of applying each diagnostic:
 - examples_of_application.py
 
-These scripts are largely based on the Iris Python package (https://scitools.org.uk/iris/docs/latest/)and are designed to be run with observations and model output in NetCDF format.
+These scripts are largely based on the Iris Python package (https://scitools.org.uk/iris/docs/latest/) and are designed to be run with observations and model output in NetCDF format.
