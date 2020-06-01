@@ -1,5 +1,4 @@
-# land_atm_coupling
-Diagnostic scripts for evaluating land-atmosphere interactions in climate models.
+# Diagnostic scripts for evaluating land-atmosphere interactions in climate models. 
 
 Author: Jess Baker (j.c.baker@leeds.ac.uk)
 LAPSE project, part of CSSP Brazil
@@ -7,20 +6,7 @@ University of Leeds, UK
 
 The scripts in this repository accompany the following manuscript:
 
-Land-atmosphere moisture coupling over South America in simulations from the UK and Brazil climate models
-
-Authors and affiliations:
-- Jessica C.A. Baker, School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
-- Dayana Castilho de Souza, Centre for Weather Forecast and Climate Studies (CPTEC), National Institute for Space Research (INPE), Brazil
-- Martin B. Andrews, Met Office Hadley Centre, Exeter, EX1 3PB, UK
-- Paulo Kubota, Centre for Weather Forecast and Climate Studies (CPTEC), National Institute for Space Research (INPE), Brazil
-- Wolfgang Buermann, Institute of Geography, Augsburg University, Augsburg, Germany
-- Caio A.S. Coelho, Centre for Weather Forecast and Climate Studies (CPTEC), National Institute for Space Research (INPE), Brazil
-- Manuel Gloor, School of Geography, University of Leeds, Leeds, LS2 9JT, UK
-- Luis Garcia-Carreras, School of Environment, University of Manchester, UK
-- John H. Marsham, School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
-- Silvio N. Figueroa 2
-- Dominick V. Spracklen, School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
+Baker, J.C.A, Castilho de Souza, D., Andrews, M.B., Kubota, P., Buermann, W., Coelho, C.A.S., Gloor, M., Garcia-Carreras, L., Marsham, J.H., Figueroa, S.N. and Spracklen, D.V. (in prep) Land-atmosphere moisture coupling over South America in simulations from the UK and Brazil climate models.
 
 Diagnostic scripts:
 - terrestrial_coupling_index.py
