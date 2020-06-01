@@ -22,10 +22,14 @@ Authors and affiliations:
 - Silvio N. Figueroa 2
 - Dominick V. Spracklen, School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
 
-Contents:
+Diagnostic scripts:
 - terrestrial_coupling_index.py
 - zengs_gamma.py
 - T_ET_metric.py
 - betts_approach.py
 - two_legged_metric.py
+
+Script providing examples of applying each diagnostic:
 - examples_of_application.py
+
+These scripts are largely based on the Iris Python package (https://scitools.org.uk/iris/docs/latest/)and are designed to be run with observations and model output in NetCDF format.
