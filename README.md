@@ -1,6 +1,6 @@
 # Diagnostic scripts for evaluating land-atmosphere interactions in climate models. 
 
-Author: Jess Baker (j.c.baker@leeds.ac.uk, part of CSSP Brazil LAPSE project at the University of Leeds, UK
+Author: Jess Baker (j.c.baker@leeds.ac.uk), part of CSSP Brazil LAPSE project at the University of Leeds, UK
 
 The scripts in this repository accompany the following manuscript:
 
