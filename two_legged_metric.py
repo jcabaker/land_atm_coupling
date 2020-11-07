@@ -67,6 +67,8 @@ from datetime import datetime
 from mpl_toolkits import basemap
 from mpl_toolkits.basemap import maskoceans
 from scipy.stats import linregress as ols
+from scipy.stats import pearsonr
+from scipy.stats import spearmanr
 
 
 def main(surf_cube, flux_cube, atm_cube, anom=True, ols_out='slope',
@@ -82,7 +84,8 @@ def main(surf_cube, flux_cube, atm_cube, anom=True, ols_out='slope',
                         'lon_lims': [-120, 180],
                         'levels': [(-10, 10, 11),
                                    (-15, 15, 11),
-                                   (-10, 10, 11)]}, p_thresh=0.05):
+                                   (-10, 10, 11)]}, p_thresh=0.05,
+         corr_method='pearson'):
 
     """
 
@@ -118,6 +121,9 @@ def main(surf_cube, flux_cube, atm_cube, anom=True, ols_out='slope',
                         figure size, limits for output map, and colorbar
                         levels.
         p_thresh = p threshold for calculating significance of correlations.
+        corr_method = correlation method. Can be 'pearson' (assumes data are
+                      normally distributed) or 'spearman' (no assumption 
+                      about the distribution).
 
     """
     # Apply scaling factors
@@ -214,7 +220,8 @@ def main(surf_cube, flux_cube, atm_cube, anom=True, ols_out='slope',
                                                  wet_bool=wet_bool,
                                                  season=season,
                                                  weighting=weighting,
-                                                 p_thresh=p_thresh)
+                                                 p_thresh=p_thresh,
+                                                 corr_method=corr_method)
             surf_leg = two_legged_output[0]
             surf_pvals = two_legged_output[1]
             atm_leg = two_legged_output[2]
@@ -285,7 +292,8 @@ def main(surf_cube, flux_cube, atm_cube, anom=True, ols_out='slope',
                                              atm_var,
                                              ols_out=ols_out,
                                              weighting=weighting,
-                                             p_thresh=p_thresh)
+                                             p_thresh=p_thresh,
+                                             corr_method=corr_method)
         surf_leg = two_legged_output[0]
         surf_pvals = two_legged_output[1]
         atm_leg = two_legged_output[2]
@@ -355,7 +363,7 @@ def main(surf_cube, flux_cube, atm_cube, anom=True, ols_out='slope',
 
 def calculating_legs(surf_var, flux_var, atm_var, ols_out='slope',
                      wet_bool=None, season=None, weighting=True,
-                     p_thresh=0.05):
+                     p_thresh=0.05, corr_method='pearson'):
     
     len_lat = surf_var.shape[-2]
     len_lon = surf_var.shape[-1]
@@ -401,29 +409,44 @@ def calculating_legs(surf_var, flux_var, atm_var, ols_out='slope',
             # Provided at least 10 months overlap proceed with calc
             if len(surf_temp[mask1]) > 10:
 
-                slope, intercept, r, p, std_err = ols(surf_temp[mask1],
-                                                      flux_temp[mask1])
                 # If significant then save value otherwise -999
                 if ols_out == 'slope':
+                    slope, intercept, r, p, std_err = ols(surf_temp[mask1],
+                                                          flux_temp[mask1])
                     surf_leg[ny, nx] = slope
+                    surf_pvals[ny, nx] = p
+                    
                 elif ols_out == 'r':
-                    surf_leg[ny, nx] = r
-                
-                surf_pvals[ny, nx] = p
+                    
+                    if corr_method == 'pearson':
+                        r, p = pearsonr(surf_temp[mask1], flux_temp[mask1])
+                        
+                    if corr_method == 'spearman':
+                        r, p = spearmanr(surf_temp[mask1], flux_temp[mask1])
+                    
+                    surf_leg[ny, nx] = r    
+                    surf_pvals[ny, nx] = p
 
             # As above for atmospheric leg
             # Find which months both flux and atm variables have data
             mask2 = ~np.isnan(flux_temp) & ~np.isnan(atm_temp)
             if len(flux_temp[mask2]) > 10:
-                slope, intercept, r, p, std_err = ols(flux_temp[mask2],
-                                                      atm_temp[mask2])
                 
                 if ols_out == 'slope':
+                    slope, intercept, r, p, std_err = ols(flux_temp[mask2],
+                                                          atm_temp[mask2])
                     atm_leg[ny, nx] = slope
-                elif ols_out == 'r':
-                    atm_leg[ny, nx] = r
+                    atm_pvals[ny, nx] = p
                 
-                atm_pvals[ny, nx] = p
+                elif ols_out == 'r':
+                    if corr_method == 'pearson':
+                        r, p = pearsonr(flux_temp[mask2], atm_temp[mask2])
+                        
+                    if corr_method == 'spearman':
+                        r, p = spearmanr(flux_temp[mask2], atm_temp[mask2])
+                    
+                    atm_leg[ny, nx] = r
+                    atm_pvals[ny, nx] = p
 
             # Calculate response of atm var to surface var
             product[ny, nx] = surf_leg[ny, nx] * atm_leg[ny, nx]
