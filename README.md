@@ -4,7 +4,7 @@ Author: Jess Baker (j.c.baker@leeds.ac.uk)
 
 The scripts in this repository were developed as part of CSSP Brazil LAPSE project at the University of Leeds, UK, and accompany the following manuscript:
 
-Baker, J.C.A, Castilho de Souza, D., Andrews, M.B., Kubota, P., Buermann, W., Coelho, C.A.S., Gloor, M., Garcia-Carreras, L., Marsham, J.H., Figueroa, S.N. and Spracklen, D.V. (in prep) Land-atmosphere moisture coupling over South America in simulations from the UK and Brazil climate models.
+Baker, J.C.A, Castilho de Souza, D., Andrews, M.B., Kubota, P., Buermann, W., Coelho, C.A.S., Gloor, M., Garcia-Carreras, L., Marsham, J.H., Figueroa, S.N. and Spracklen, D.V. (in prep) An assessment of land-atmosphere interactions over South America using satellites, reanalysis and two global climate models.
 
 Diagnostic scripts:
 - terrestrial_coupling_index.py
