@@ -40,16 +40,19 @@ import os
 import iris
 import matplotlib
 from matplotlib.path import Path
-from scipy.stats import linregress as ols
+from scipy.stats import pearsonr
+from scipy.stats import spearmanr
 from datetime import datetime
 from mpl_toolkits.basemap import maskoceans
 import seaborn as sns
 
 
 def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=False,
-         calculate_anomalies=False, show_mask=False, title=None, xlim=None,
-         ylim=None, fontsize=12, name1=None, name2=None, lonflip=False,
-         outpath=None, annotate=None, annotation_font_size=12):
+         calculate_anomalies=False, show_mask=False, title=None, 
+         xlim=None, ylim=None, xticks=None, yticks=None,
+         fontsize=12, name1=None, name2=None, lonflip=False,
+         outpath=None, annotate=None, annotation_font_size=12,
+         corr_method='pearson', n_levels=8, markersize=5):
 
     """
 
@@ -73,16 +76,23 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
                               calculated and plotted.
         show_mask = Boolean. If True then extraction domain is plotted.
         title = optional string as title for plot.
-        xlim = optional tuple to set x axis limits, e.g. (-50, 50)
-        ylim = optional tuple to set y axis limits, e.g. (-50, 50)
-        fontsize = set font size for plot
-        name1 = label for x axis
-        name2 = label for y axis
+        xlim = optional tuple to set x axis limits, e.g. (-50, 50).
+        ylim = optional tuple to set y axis limits, e.g. (-50, 50).
+        xticks = optional list to set the xticklabels.
+        yticks = optional list to set the yticklabels.
+        fontsize = set font size for plot.
+        name1 = label for x axis.
+        name2 = label for y axis.
         lonflip = Boolean. If True then inputs converted to minus 180 to plus
-                  180
-        outpath = optional out directory for figure (string)
-        annotate = optional string to annotate plot
-        annotation_font_size = set font size for annotation
+                  180.
+        outpath = optional out directory for figure (string).
+        annotate = optional string to annotate plot.
+        annotation_font_size = set font size for annotation.
+        corr_method = correlation method. Can be 'pearson' (assumes data are
+                      normally distributed) or 'spearman' (no assumption 
+                      about the distribution).
+        n_levels = number of contour levels. Default = 8.
+        markersize = optional marker size for scatterplots. Default=5.
     """
 
     # Calculate anomalies if required
@@ -142,16 +152,21 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
     if len(var1.shape) > 2:
         # Clip data to mask, looping over all time coordinates
         nt = var1.shape[0]
-        subset1 = np.zeros((nt, len(mask[mask == 1])))
-        subset2 = np.zeros((nt, len(mask[mask == 1])))
+        subset1 = np.zeros((nt))
+        subset2 = np.zeros((nt))
         for n in range(nt):
-            subset1[n] = var1.data[n, :, :][mask]
-            subset2[n] = var2.data[n, :, :][mask]
+            # Calculate spatial means for each time step
+            subset1[n] = np.nanmean(var1.data[n, :, :][mask])
+            subset2[n] = np.nanmean(var2.data[n, :, :][mask])
 
     elif len(var1.shape) == 2:
-        subset1 = var1.data[:, :][mask]
-        subset2 = var2.data[:, :][mask]
-
+        # Calculate spatial means for each time step
+        subset1 = np.nanmean(var1.data[:, :][mask])
+        subset2 = np.nanmean(var2.data[:, :][mask])
+    
+    print(subset1.shape)
+    print(subset2.shape)
+    
     # Flatten arrays and find nans
     xdata = subset1.flatten()
 
@@ -185,60 +200,111 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
 
     if scatter is True and contour is False:
         fig = plt.figure(figsize=(8, 8))
-        ax = fig.add_subplot(111)
-        ax.scatter(xdata, ydata, alpha=0.3, color='k')
+        sns.set_style("white")
+        sns.set_context("talk")
+        fig = plt.figure(figsize=(8, 8))
+
+        # Define the axes positions
+        left1 = 0.05
+        bottom1 = 0.05
+        width1 = height1 = 0.7
+        width2 = height2 = 0.2
+        ax_main = plt.axes([left1, bottom1, width1, height1])
+        ax_top = plt.axes([left1, bottom1+height1, width1, height2])
+        ax_right = plt.axes([left1+width1, bottom1, width2, height1])
+        
+        # Set up colour map
+        cmap_main = sns.cubehelix_palette(8, start=2.7, rot=0, dark=0.05,
+                                          light=.95, as_cmap=True)
+        N = 8
+        cmap_hist = plt.cm.get_cmap('Blues_r', N)
+        my_color_values = []
+        for i in range(cmap_hist.N):
+            rgb = cmap_hist(i)[:3] # will return rgba, we take only first 3 so we get rgb
+            my_color_values.append(matplotlib.colors.rgb2hex(rgb))
+        color1 = my_color_values[1]
+        
+        # Plot data
+        # Main plot
+        ax_main.scatter(xdata, ydata, alpha=0.5, color='k', s=markersize)
+        if xticks is not None:
+            ax_main.set_xticks(xticks)
+        if yticks is not None:
+            ax_main.set_yticks(yticks)
         plt.xticks(fontsize=s)
         plt.yticks(fontsize=s)
-        
+        for tick in ax_main.xaxis.get_major_ticks():
+            tick.label.set_fontsize(s) 
+        for tick in ax_main.yaxis.get_major_ticks():
+            tick.label.set_fontsize(s) 
+
+        if xlim is not None:
+            ax_main.set_xlim(xlim)
+
+        if ylim is not None:
+            ax_main.set_ylim(ylim)
+
         if name1 is None:
             name1 = var1.long_name
             if name1 is None:
                 name1 = var1.standard_name
-        print(name1)
-        if scale1 is not None:
-            ax.set_xlabel(name1 +
-                          ' ({:.0e}'.format(scale1) +
-                          ' ' + str(var1.units) + ')', fontsize=s)
-        else:
-            ax.set_xlabel(name1 +
-                          ' (' + str(var1.units) + ')', fontsize=s)
-        if xlim is not None:
-            ax.set_xlim(xlim)
 
-        if ylim is not None:
-            ax.set_ylim(ylim)
-            
+        if scale1 is not None:
+            ax_main.set_xlabel(name1 +
+                               ' ({:.0e}'.format(scale1) +
+                               ' ' + str(var1.units) + ')', fontsize=s)
+        else:
+            ax_main.set_xlabel(name1 +
+                               ' (' + str(var1.units) + ')', fontsize=s)
+
         if name2 is None:
             name2 = var2.long_name
             if name2 is None:
                 name2 = var2.standard_name
-            
-        print(name2)
-        if scale2 is not None:
-            ax.set_ylabel(name2 +
-                          ' ({:.0e}'.format(scale2) +
-                          ' ' + str(var2.units) + ')', fontsize=s)
-        else:
-            ax.set_ylabel(name2 +
-                          ' (' + str(var2.units) + ')', fontsize=s)
 
-        # Add Pearson correlation coefficient
-        slope, intercept, r, p, std_err = ols(xdata, ydata)
-        txt = "Pearson's r = " + str('%.2f' % r) + ',  p = ' +\
+        if scale2 is not None:
+            ax_main.set_ylabel(name2 +
+                               ' ({:.0e}'.format(scale2) +
+                               ' ' + str(var2.units) + ')', fontsize=s)
+        else:
+            ax_main.set_ylabel(name2 +
+                               ' (' + str(var2.units) + ')', fontsize=s)
+
+        # Top pdf plot
+        sns.kdeplot(xdata, ax=ax_top, shade=True, color=color1, legend=False)
+        ax_top.set_xticklabels([])
+        ax_top.set_yticklabels([])
+        ax_top.axis('off')
+
+        # Right pdf plot
+        sns.kdeplot(ydata, ax=ax_right, vertical=True, shade=True,
+                    color=color1, legend=False)
+        ax_right.set_xticklabels([])
+        ax_right.axis('off')
+
+        # Add correlation coefficient
+        if corr_method == 'pearson':
+            r, p = pearsonr(xdata, ydata)
+                        
+        if corr_method == 'spearman':
+            r, p = spearmanr(xdata, ydata)
+                        
+        txt = "r = " + str('%.2f' % r) + ',  p = ' +\
               str('%.3f' % p)
-              
-        print('Slope = ', slope)
-        
-        ax.annotate(txt, xy=(0.25, 0.95), xycoords='axes fraction',
-                    xytext=(0.25, 0.95), fontsize=s)
+
+        ax_main.annotate(txt, xy=(0.5, 0.95), xycoords='axes fraction',
+                         xytext=(0.95, 0.95), fontsize=s,
+                         horizontalalignment='right',
+                         verticalalignment='top')
         if title is not None:
-            ax.annotate(title, xy=(0.05, 0.05), xycoords='axes fraction',
-                        xytext=(0.05, 0.05), fontsize=s, fontweight='bold')
+            ax_main.annotate(title, xy=(0.05, 0.05), xycoords='axes fraction',
+                             xytext=(0.05, 0.05), fontsize=s,
+                             fontweight='bold')
             
         # If required add annotation
         if annotate is not None:
-            ax.annotate(annotate, xy=(0.95, 0.05), xycoords='axes fraction',
-                        xytext=(0.95, 0.05), fontsize=annotation_font_size,
+            ax_main.annotate(annotate, xy=(0.9, 0.05), xycoords='axes fraction',
+                        xytext=(0.9, 0.05), fontsize=annotation_font_size,
                         fontweight='bold')
             
         # Save figure
@@ -265,6 +331,11 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
         width2 = height2 = 0.15
         ax_main = plt.axes([left1, bottom1, width1, height1])
         
+        if xticks is not None:
+            ax_main.set_xticks(xticks)
+        if yticks is not None:
+            ax_main.set_yticks(yticks)
+            
         # Have distribution axes outside main axis
         ax_top = plt.axes([left1, bottom1+height1, width1, height2])
         ax_right = plt.axes([left1+width1, bottom1, width2, height1])
@@ -272,7 +343,7 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
             ax_main.annotate(title, xy=(0.05, 0.05), xycoords='axes fraction',
                              xytext=(0.05, 0.05), fontsize=s,
                              fontweight='bold')
-            ax_main.grid(color='gray', linestyle='dashed')
+            #ax_main.grid(color='gray', linestyle='dashed')
             ax_main.set_axisbelow(True)
         
         # OR have distribution axes within main axis
@@ -297,7 +368,7 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
         # Main plot
         plot = sns.kdeplot(xdata, ydata, shade=True, ax=ax_main,
                            cmap=cmap_main,
-                           shade_lowest=False, n_levels=8)
+                           shade_lowest=False, n_levels=n_levels)
         plt.xticks(fontsize=s)
         plt.yticks(fontsize=s)
         plot.tick_params(labelsize=s)
@@ -339,10 +410,10 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
         # Top pdf plot
         
         # Without histogram
-#        sns.kdeplot(xdata, ax=ax_top, shade=True, color=color1, legend=False)
+        sns.kdeplot(xdata, ax=ax_top, shade=True, color=color1, legend=False)
         
         # OR with histogram
-        sns.distplot(xdata, ax=ax_top, norm_hist=True, color=color1)
+#        sns.distplot(xdata, ax=ax_top, norm_hist=True, color=color1)
         
         ax_top.set_xticklabels([])
         ax_top.set_yticklabels([])
@@ -351,29 +422,30 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
         # Right pdf plot
         
         # Without histogram
-#        sns.kdeplot(ydata, ax=ax_right, vertical=True, shade=True,
-#                    color=color1, legend=False)
+        sns.kdeplot(ydata, ax=ax_right, vertical=True, shade=True,
+                    color=color1, legend=False)
         
         # OR with histogram
-        sns.distplot(ydata, ax=ax_right, color=color1, vertical=True,
-                     norm_hist=True)
+#        sns.distplot(ydata, ax=ax_right, color=color1, vertical=True,
+#                     norm_hist=True)
         ax_right.set_xticklabels([])
         ax_right.axis('off')
         
-        # OR with histogram
-        ax_right.set_xticklabels([])
-        ax_right.axis('off')
 
-        # Add Pearson correlation coefficient
-        slope, intercept, r, p, std_err = ols(xdata, ydata)
-        txt = "Pearson's r = " + str('%.2f' % r) + ',  p = ' +\
+        # Add correlation coefficient
+        if corr_method == 'pearson':
+            r, p = pearsonr(xdata, ydata)
+                        
+        if corr_method == 'spearman':
+            r, p = spearmanr(xdata, ydata)
+                        
+        txt = "r = " + str('%.2f' % r) + ',  p = ' +\
               str('%.3f' % p)
-              
-        print('Slope = ', slope)
         
         ax_main.annotate(txt, xy=(0.5, 0.95), xycoords='axes fraction',
                          xytext=(0.95, 0.95), fontsize=s,
-                         horizontalalignment='right')
+                         horizontalalignment='right',
+                         verticalalignment='top')
         
          # If required add annotation
         if annotate is not None:
@@ -422,17 +494,23 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
         # Plot data
         # Main plot
         plot = sns.kdeplot(xdata, ydata, shade=True, ax=ax_main, cmap=cmap_main,
-                           shade_lowest=False, n_levels=8)
-        ax_main.scatter(xdata, ydata, alpha=0.5, color='k', s=1.5)
+                           shade_lowest=False, n_levels=n_levels)
+        ax_main.scatter(xdata, ydata, alpha=0.5, color='k', s=markersize)
+        if xticks is not None:
+            ax_main.set_xticks(xticks)
+        if yticks is not None:
+            ax_main.set_yticks(yticks)
         plt.xticks(fontsize=s)
         plt.yticks(fontsize=s)
         plot.tick_params(labelsize=s)
 
         if xlim is not None:
             ax_main.set_xlim(xlim)
-
+            ax_top.set_xlim(xlim)
+            
         if ylim is not None:
             ax_main.set_ylim(ylim)
+            ax_right.set_ylim(ylim)
 
         if name1 is None:
             name1 = var1.long_name
@@ -461,24 +539,43 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
                                ' (' + str(var2.units) + ')', fontsize=s)
 
         # Top pdf plot
+
+        # Without histogram
         sns.kdeplot(xdata, ax=ax_top, shade=True, color=color1, legend=False)
+        
+        # OR with histogram
+#        sns.distplot(xdata, ax=ax_top, norm_hist=True, color=color1)
+        
         ax_top.set_xticklabels([])
         ax_top.set_yticklabels([])
         ax_top.axis('off')
 
         # Right pdf plot
+        
+        # Without histogram
         sns.kdeplot(ydata, ax=ax_right, vertical=True, shade=True,
                     color=color1, legend=False)
+        
+        # OR with histogram
+#        sns.distplot(ydata, ax=ax_right, color=color1, vertical=True,
+#                     norm_hist=True)
         ax_right.set_xticklabels([])
         ax_right.axis('off')
 
-        # Add Pearson correlation coefficient
-        slope, intercept, r, p, std_err = ols(xdata, ydata)
-        txt = "Pearson's r = " + str('%.2f' % r) + ',  p = ' +\
+        # Add correlation coefficient
+        if corr_method == 'pearson':
+            r, p = pearsonr(xdata, ydata)
+                        
+        if corr_method == 'spearman':
+            r, p = spearmanr(xdata, ydata)
+                        
+        txt = "r = " + str('%.2f' % r) + ',  p = ' +\
               str('%.3f' % p)
-        ax_main.annotate(txt, xy=(0.5, 0.95), xycoords='axes fraction',
+
+        ax_main.annotate(txt, xy=(0.5, 0.9), xycoords='axes fraction',
                          xytext=(0.95, 0.95), fontsize=s,
-                         horizontalalignment='right')
+                         horizontalalignment='right',
+                         verticalalignment='top')
         if title is not None:
             ax_main.annotate(title, xy=(0.05, 0.05), xycoords='axes fraction',
                              xytext=(0.05, 0.05), fontsize=s,
@@ -487,8 +584,8 @@ def main(var1, var2, domain, scale1=None, scale2=None, contour=False, scatter=Fa
             
         # If required add annotation
         if annotate is not None:
-            ax_main.annotate(annotate, xy=(0.95, 0.05), xycoords='axes fraction',
-                        xytext=(0.95, 0.05), fontsize=annotation_font_size,
+            ax_main.annotate(annotate, xy=(0.9, 0.05), xycoords='axes fraction',
+                        xytext=(0.9, 0.05), fontsize=annotation_font_size,
                         fontweight='bold')
         # Save figure
         today = datetime.today()
