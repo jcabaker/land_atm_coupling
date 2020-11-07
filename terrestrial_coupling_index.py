@@ -47,6 +47,8 @@ from mpl_toolkits import basemap
 from mpl_toolkits.basemap import maskoceans
 from datetime import datetime
 from scipy.stats import linregress as ols
+from scipy.stats import pearsonr
+from scipy.stats import spearmanr
 
 
 def main(sm_cube, et_cube, ols_out='slope', wet_dry=False, constraint_yrs=None,
@@ -56,7 +58,8 @@ def main(sm_cube, et_cube, ols_out='slope', wet_dry=False, constraint_yrs=None,
          plotting_args={'name': 'Terrestrial Coupling Index',
                         'lat_lims': [-60, 30],
                         'lon_lims': [-120, 180],
-                        'levels': (-10, 10, 11)}, p_thresh=0.05):
+                        'levels': (-10, 10, 11)}, p_thresh=0.05,
+         corr_method='pearson'):
 
     """
 
@@ -88,6 +91,9 @@ def main(sm_cube, et_cube, ols_out='slope', wet_dry=False, constraint_yrs=None,
                         data being plotted (observations or name of model),
                         limits for output map, and colorbar levels.
         p_thresh = p threshold for calculating significance of correlations.
+        corr_method = correlation method. Can be 'pearson' (assumes data are
+                      normally distributed) or 'spearman' (no assumption 
+                      about the distribution).
 
     """
     
@@ -175,7 +181,8 @@ def main(sm_cube, et_cube, ols_out='slope', wet_dry=False, constraint_yrs=None,
                                               wet_bool=wet_bool,
                                               season=season,
                                               weighting=weighting,
-                                              p_thresh=p_thresh)
+                                              p_thresh=p_thresh,
+                                              corr_method=corr_method)
 
             data_dict[season]['tci'] = tci
             data_dict[season]['pval_array'] = pval_array
@@ -209,7 +216,8 @@ def main(sm_cube, et_cube, ols_out='slope', wet_dry=False, constraint_yrs=None,
     else:
         tci, pval_array = calculating_tci(sm_anom, et_anom, ols_out=ols_out,
                                           weighting=weighting,
-                                          p_thresh=p_thresh)
+                                          p_thresh=p_thresh,
+                                          corr_method=corr_method)
 
         # Call plotting routine
         if plotting is True:
@@ -245,7 +253,7 @@ def main(sm_cube, et_cube, ols_out='slope', wet_dry=False, constraint_yrs=None,
 
 def calculating_tci(sm_anom, et_anom, ols_out='slope',
                     wet_bool=None, season=None, weighting=True,
-                    p_thresh=0.05):
+                    p_thresh=0.05, corr_method='pearson'):
 
     # Define arrays to store data
     len_lat = sm_anom.shape[-2]
@@ -277,16 +285,22 @@ def calculating_tci(sm_anom, et_anom, ols_out='slope',
             # Provided at least 10 months overlap proceed with calc
             if len(surf_temp[mask]) > 10:
 
-                slope, intercept, r, p, std_err = ols(surf_temp[mask],
-                                                      flux_temp[mask])
-
-                # Save tci and p value
                 if ols_out == 'slope':
+                    slope, intercept, r, p, std_err = ols(surf_temp[mask],
+                                                          flux_temp[mask])
                     tci[ny, nx] = slope
-                elif ols_out == 'r':
-                    tci[ny, nx] = r
+                    pval_array[ny, nx] = p
                     
-                pval_array[ny, nx] = p
+                elif ols_out == 'r':
+                    
+                    if corr_method == 'pearson':
+                        r, p = pearsonr(surf_temp[mask], flux_temp[mask])
+                        
+                    if corr_method == 'spearman':
+                        r, p = spearmanr(surf_temp[mask], flux_temp[mask])
+                    
+                    tci[ny, nx] = r    
+                    pval_array[ny, nx] = p
 
             # Weight by variability of denominator (see Dirmeyer et al., 2011)
             # this emphasises places where actual impact is large
