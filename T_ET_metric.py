@@ -54,6 +54,8 @@ from mpl_toolkits import basemap
 from mpl_toolkits.basemap import maskoceans
 from datetime import datetime
 from scipy.stats import linregress as ols
+from scipy.stats import pearsonr
+from scipy.stats import spearmanr
 
 
 def main(t_cube, et_cube, ols_out='r', wet_dry=False, constraint_yrs=None,
@@ -64,7 +66,8 @@ def main(t_cube, et_cube, ols_out='r', wet_dry=False, constraint_yrs=None,
          plotting_args={'name': 'Temperature-Evapotranspiration Metric',
                         'lat_lims': [-60, 30],
                         'lon_lims': [-120, 180],
-                        'levels': (-1, 1, 11)}):
+                        'levels': (-1, 1, 11)},
+         corr_method='pearson'):
 
     """
 
@@ -95,6 +98,9 @@ def main(t_cube, et_cube, ols_out='r', wet_dry=False, constraint_yrs=None,
         plotting_args = dictionary of plotting arguments, including name of
                         data being plotted (observations or name of model),
                         limits for output map, and colorbar levels.
+        corr_method = correlation method. Can be 'pearson' (assumes data are
+                      normally distributed) or 'spearman' (no assumption 
+                      about the distribution).
 
     """
     
@@ -175,8 +181,10 @@ def main(t_cube, et_cube, ols_out='r', wet_dry=False, constraint_yrs=None,
         for season in ['wet', 'dry']:
             print(season)
             t_et, pval_array = calculating_t_et(t_anom, et_anom, ols_out=ols_out,
-                                  wet_bool=wet_bool, season=season,
-                                  weighting=weighting)
+                                                wet_bool=wet_bool,
+                                                season=season,
+                                                weighting=weighting,
+                                                corr_method=corr_method)
 
             data_dict[season]['t_et'] = t_et
             data_dict[season]['pval_array'] = pval_array
@@ -209,7 +217,8 @@ def main(t_cube, et_cube, ols_out='r', wet_dry=False, constraint_yrs=None,
     # Calculate metric using data from all months
     else:
         t_et, pval_array = calculating_t_et(t_anom, et_anom, ols_out=ols_out,
-                                          weighting=weighting)
+                                            weighting=weighting,
+                                            corr_method=corr_method)
 
         # Call plotting routine
         if plotting is True:
@@ -244,7 +253,8 @@ def main(t_cube, et_cube, ols_out='r', wet_dry=False, constraint_yrs=None,
 
 
 def calculating_t_et(t_anom, et_anom, ols_out='r',
-                     wet_bool=None, season=None, weighting=False):
+                     wet_bool=None, season=None, weighting=False,
+                     corr_method='pearson'):
 
     # Define arrays to store data
     len_lat = t_anom.shape[-2]
@@ -276,16 +286,23 @@ def calculating_t_et(t_anom, et_anom, ols_out='r',
             # Provided at least one month overlap proceed with calc
             if len(surf_temp[mask]) > 10:
 
-                slope, intercept, r, p, std_err = ols(surf_temp[mask],
-                                                      flux_temp[mask])
-
                 # Save t_et and p value
                 if ols_out == 'slope':
+                    slope, intercept, r, p, std_err = ols(surf_temp[mask],
+                                                          flux_temp[mask])
                     t_et[ny, nx] = slope
-                elif ols_out == 'r':
-                    t_et[ny, nx] = r
+                    pval_array[ny, nx] = p
                     
-                pval_array[ny, nx] = p
+                elif ols_out == 'r':
+                    
+                    if corr_method == 'pearson':
+                        r, p = pearsonr(surf_temp[mask], flux_temp[mask])
+                        
+                    if corr_method == 'spearman':
+                        r, p = spearmanr(surf_temp[mask], flux_temp[mask])
+                    
+                    t_et[ny, nx] = r    
+                    pval_array[ny, nx] = p
 
             # Weight by variability of denominator to emphasise 
             # places where actual impact is large
