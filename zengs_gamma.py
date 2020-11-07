@@ -41,13 +41,15 @@ import copy
 import os
 from mpl_toolkits import basemap
 from scipy.stats import pearsonr
+from scipy.stats import spearmanr
 from mpl_toolkits.basemap import maskoceans
 from datetime import datetime
 
 
 def main(pre_cube, et_cube, plotting=False,
          plotting_args={'lat_lims': [-50, 20],
-                        'lon_lims': [-100, -30]}):
+                        'lon_lims': [-100, -30]},
+         anom=True, corr_method='pearson'):
     """
     
     This function uses precipitation and evapotranspiration data to calculate
@@ -61,12 +63,23 @@ def main(pre_cube, et_cube, plotting=False,
         plotting = Boolean. Plot output of metric. If False returns output of
                    metric as array only.
         plotting_args = limits for output map.
+        anom = Boolean. Calculate metric using anomalies from climatological
+               seasonal cycle (True) or interannual monthly data
+               (False).
+        corr_method = correlation method. Can be 'pearson' (assumes data are
+                      normally distributed) or 'spearman' (no assumption 
+                      about the distribution).
         
     """
     
     # Calculate anomalies versus climatological seasonal cycle
-    pre_anom = monthly_anom_cube(pre_cube)
-    et_anom = monthly_anom_cube(et_cube)
+    if anom is True:
+        pre_anom = monthly_anom_cube(pre_cube)
+        et_anom = monthly_anom_cube(et_cube)
+    else:
+        # only if anom calculated before calling metric
+        pre_anom = pre_cube
+        et_anom = et_cube
     
     # Check if lats are ascending, if not then reverse
     pre_anom = flip_lats(pre_anom)
@@ -92,7 +105,11 @@ def main(pre_cube, et_cube, plotting=False,
             mask = ~np.isnan(x) & ~np.isnan(y)
             
             try:
-                r, p = pearsonr(x[mask], y[mask])
+                if corr_method == 'pearson':
+                    r, p = pearsonr(x[mask], y[mask])
+                if corr_method == 'spearman':
+                    r, p = spearmanr(x[mask], y[mask])
+                    
                 rvals[nlat, nlon] = r
                 pvals[nlat, nlon] = p
                 
