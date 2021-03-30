@@ -4,7 +4,8 @@ Author: Jess Baker (j.c.baker@leeds.ac.uk)
 
 The scripts in this repository were developed as part of the CSSP Brazil LAPSE project at the University of Leeds, UK, and accompany the following manuscript:
 
-Baker, J.C.A, Castilho de Souza, D., Andrews, M.B., Kubota, P., Buermann, W., Coelho, C.A.S., Gloor, M., Garcia-Carreras, L., Marsham, J.H., Figueroa, S.N. and Spracklen, D.V. (in review) An assessment of land-atmosphere interactions over South America using satellites, reanalysis and two global climate models.
+Baker, J. C. A., Castilho De Souza, D., Kubota, P. Y., Buermann, W., Coelho, C. a. S., Andrews, M. B., Gloor, M., Garcia-Carreras, L., Figueroa, S. N. & Spracklen, D. V. 2021. An Assessment of Land–Atmosphere Interactions over South America Using Satellites, Reanalysis, and Two Global Climate Models. Journal of Hydrometeorology, 22, 905-922.
+
 
 Diagnostic scripts:
 - terrestrial_coupling_index.py
