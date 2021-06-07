@@ -6,8 +6,7 @@ The scripts in this repository were developed as part of the CSSP Brazil LAPSE p
 
 Baker, J. C. A., Castilho De Souza, D., Kubota, P. Y., Buermann, W., Coelho, C. a. S., Andrews, M. B., Gloor, M., Garcia-Carreras, L., Figueroa, S. N. & Spracklen, D. V. 2021. An Assessment of Land–Atmosphere Interactions over South America Using Satellites, Reanalysis, and Two Global Climate Models. Journal of Hydrometeorology, 22, 905-922.
 
-Users of the land-atmosphere diagnostics are asked to please cite this publication and any diagnostic-specific references within.
-
+If you use any of the diagnostic scripts in your research please cite the reference above and any diagnostic-specific references within. If you have any questions, comments or feedback please email Jess Baker (email address at the top of this file). 
 
 Diagnostic scripts:
 - terrestrial_coupling_index.py
@@ -21,4 +20,3 @@ Script providing examples of applying each diagnostic:
 
 These scripts are largely based on the Iris Python package (https://scitools.org.uk/iris/docs/latest/) and are designed to be run with observations and model output in NetCDF format.
 
-If you use any of these scripts in your research please cite the reference above. If you have any questions, comments or feedback please email Jess Baker using the email address at the top of this document. 
